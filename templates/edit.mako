@@ -1,3 +1,7 @@
+<%
+    from main import value_or_pk
+%>
+
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <link href="/static/css/bootstrap.min.css" rel="stylesheet" media="screen">
 <link href="/static/css/bootstrap-glyphicons.css" rel="stylesheet" media="screen">
@@ -6,87 +10,124 @@
 <script src="http://code.jquery.com/ui/1.10.3/jquery-ui.js"></script>
 
 <form name="edit" method="POST" action="" id="edit">
-    <legend>${schema_name}</legend>
-    % for key, value in schema_obj_data.iteritems():
-        % if key!='_backrefs':
-            <h4 style="margin-left: 5px;">${key}</h4><div class="form-group row" style="margin-left: 25px;">
+
+    <legend>${schema_obj._name}</legend>
+
+    % for field_name, field_object in schema_obj._fields.iteritems():
+
+        <%
+            value = getattr(schema_obj, field_name)
+        %>
+
+
+        % if field_name != "_backrefs":
+        <h4 style="margin-left: 5px;">${field_name}</h4><div class="form-group row" style="margin-left: 25px;">
+##             <span>${field_name}</span><br>
+
+             <span>
+
+                 % if field_object._list:
+                     <ul class="list-group col-lg-4 sortable" id="${field_object.__class__.__name__}" keyName="${field_name}">
+                     % for item in value:
+##                         <input type="text" id="${field_object.__class__.__name__}" value="${value_or_pk(item)}" />
+                         <li item="item" class="list-group-item form-control" contenteditable>${value_or_pk(item)}</li>
+                     % endfor
+                     </ul>
+                 % else:
+                     <input type="text" id="${field_object.__class__.__name__}" value="${value_or_pk(value)}" />
+                 % endif
+             </span>
+
+         </div>
         % endif
-        % if key==schema_primary_name:
-                            <ul class="list-group col-lg-4" id="${key}">
-                    <li class="list-group-item form-control data" id="${key}" item="item" contenteditable>${value}</li>
-                </ul></div>
-        % elif type(value) is dict and 'foreign' in value:
-                <ul class="list-group col-lg-4 ForeignField" id="${key}">
-                <div style="position: relative;">
-                    <li class="list-group-item form-control data" id="${key}" item="item" ondblclick="areYouSure(this)">${value['primary_value']}</li>
-                <a href="/${value['schema_name']}/${value['primary_value']}/edit" style="position:absolute; top:9; right:9;" class="badge" data-toggle="popover" id="${value['primary_value']}" object-vals='${value['foreign_obj']}'><span class="glyphicon glyphicon-search"></span></a></div>
-                </ul>
-            </div>
-        % elif type(value) is list:
-            % if type(value[0]) is dict and 'foreign' in value[0]:
-                <ul class="list-group col-lg-4 ForeignListField sortable" keyName="${key}">
-                    % for item in value:
-                    <div style="position:relative;" >
-                        <li class="list-group-item form-control" item="item" onclick="areYouSure(this)" contenteditable>${item['primary_value']}</li>
-                        <a class="badge glyphicon glyphicon-remove" style="position:absolute; top:9; right:38;" onclick="removeListItem(this)"> </a>
-                        <a href="/${item['schema_name']}/${item['primary_value']}/edit" style="position:absolute; top:9; right:9;" class="badge" data-toggle="popover" id="${item['primary_value']}" object-vals='${item['foreign_obj']}'>
-                            <span class="glyphicon glyphicon-search"></span></a><span class="handle glyphicon glyphicon-move" style="position:absolute; top:9; left:-15;"></span>
-                    </div>
-                    % endfor
-                    <div class="placeholder" style="position: relative;"><li class="placeholder list-group-item form-control" id="${key}placeholder" onclick="$(this).text('');" onkeydown="addListItem($(this).text(), this)" contenteditable>add new...</li>
-                    <a class="badge glyphicon glyphicon-plus" style="position:absolute; top:9; right:9;" onclick="addListItem($(this.parentNode).text(), this);"> </a>
-                    </div>
-                </ul>
-                    <input type="text" id="${key}" style="display: none;" class="dataList">
-                    </div>
-            % else:
-                <ul class="list-group ListField col-lg-4 sortable test1" keyName="${key}">
-                    % for item in value:
-                    <div style="position: relative;"><li item="item" class="list-group-item form-control" contenteditable>${item}</li>
-                    <a class="badge glyphicon glyphicon-remove" style="position:absolute; top:9; right:9;" onclick="removeListItem(this)"> </a><span class="handle glyphicon glyphicon-move" style="position:absolute; top:9; left:-15;"></span>
-                    </div>
-                    % endfor
-                    <input type="text" id="${key}" style="display: none;" value="${value}" class="dataList">
-                    <div class="placeholder" style="position: relative;"><li class="placeholder list-group-item form-control" id="${key}placeholder" onclick="$(this).text('');" onkeydown="addListItem($(this).text(), this)" contenteditable>add new...</li>
-                    <a class="badge glyphicon glyphicon-plus" style="position:absolute; top:9; right:9;" onclick="addListItem($(this.parentNode).text(), this);"> </a>
-                    </div>
-                </ul>
-                    </div>
-            %endif
-        % elif key=='_backrefs':
-            <h4 style="margin-left: 5px;">references</h4>
-            % for refs, vals in value.iteritems():
-                % for schema, schema_attr in vals.iteritems():
-                    % for parent_field_name, parent_keys in schema_attr.iteritems():
-                        <div class="row" style="margin-left: 25px;">
-                        <ul class="list-group col-lg-4">
-                        <h5>${refs}</h5>
-                        % for parent_key in parent_keys:
-                            <div style="position: relative;">
-                                <li class="list-group-item form-control">${parent_key}</li>
-                                <a href="/${schema}/${parent_key}/edit" style="position:absolute; top:9; right:9;" class="badge" data-toggle="popover" id="${parent_key}" object-vals='${parent_key}'>
-                                <span class="glyphicon glyphicon-search"></span></a>
-                            </div>
-##                                <a class="badge glyphicon glyhref="/${schema}/${parent_key}/edit">${parent_key}</a>
-                        % endfor
-                        </ul>
-                        </div>
-                    % endfor
-                % endfor
-            % endfor
-##                <textarea class="data col-lg-4" value="${value}">${value}</textarea></div>
-        % elif key=='body' or type(value) is dict:
-                <textarea class="data col-lg-4" value="${value}">${value}</textarea></div>
-        % else:
-                <ul class="list-group col-lg-4" id="${key}">
-                    <li class="list-group-item form-control data" id="${key}" item="item" contenteditable>${value}</li>
-                </ul></div>
-        % endif
+
     % endfor
     <button type="submit"> submit me </button><P>${message}</P>
     <input type="text" id="submitter" style="display: none;" name="json_data">
 </form>
-<br>
+
+##<form name="edit" method="POST" action="" id="edit">
+##    <legend>${schema_name}</legend>
+##    % for key, value in schema_obj_data.iteritems():
+##        % if key!='_backrefs':
+##            <h4 style="margin-left: 5px;">${key}</h4><div class="form-group row" style="margin-left: 25px;">
+##        % endif
+##        % if key==schema_primary_name:
+##                            <ul class="list-group col-lg-4" id="${key}">
+##                    <li class="list-group-item form-control data" id="${key}" item="item" contenteditable>${value}</li>
+##                </ul></div>
+##        % elif type(value) is dict and 'foreign' in value:
+##                <ul class="list-group col-lg-4 ForeignField" id="${key}">
+##                <div style="position: relative;">
+##                    <li class="list-group-item form-control data" id="${key}" item="item" ondblclick="areYouSure(this)">${value['primary_value']}</li>
+##                <a href="/${value['schema_name']}/${value['primary_value']}/edit" style="position:absolute; top:9; right:9;" class="badge" data-toggle="popover" id="${value['primary_value']}" object-vals='${value['foreign_obj']}'><span class="glyphicon glyphicon-search"></span></a></div>
+##                </ul>
+##            </div>
+##        % elif isinstance(value, list):
+##            % if type(value[0]) is dict and 'foreign' in value[0]:
+##                <ul class="list-group col-lg-4 ForeignListField sortable" keyName="${key}">
+##                    % for item in value:
+##                    <div style="position:relative;" >
+##                        <li class="list-group-item form-control" item="item" onclick="areYouSure(this)" contenteditable>${item['primary_value']}</li>
+##                        <a class="badge glyphicon glyphicon-remove" style="position:absolute; top:9; right:38;" onclick="removeListItem(this)"> </a>
+##                        <a href="/${item['schema_name']}/${item['primary_value']}/edit" style="position:absolute; top:9; right:9;" class="badge" data-toggle="popover" id="${item['primary_value']}" object-vals='${item['foreign_obj']}'>
+##                            <span class="glyphicon glyphicon-search"></span></a><span class="handle glyphicon glyphicon-move" style="position:absolute; top:9; left:-15;"></span>
+##                    </div>
+##                    % endfor
+##                    <div class="placeholder" style="position: relative;"><li class="placeholder list-group-item form-control" id="${key}placeholder" onclick="$(this).text('');" onkeydown="addListItem($(this).text(), this)" contenteditable>add new...</li>
+##                    <a class="badge glyphicon glyphicon-plus" style="position:absolute; top:9; right:9;" onclick="addListItem($(this.parentNode).text(), this);"> </a>
+##                    </div>
+##                </ul>
+##                    <input type="text" id="${key}" style="display: none;" class="dataList">
+##                    </div>
+##            % else:
+##                <ul class="list-group ListField col-lg-4 sortable test1" keyName="${key}">
+##                    % for item in value:
+##                    <div style="position: relative;"><li item="item" class="list-group-item form-control" contenteditable>${item}</li>
+##                    <a class="badge glyphicon glyphicon-remove" style="position:absolute; top:9; right:9;" onclick="removeListItem(this)"> </a><span class="handle glyphicon glyphicon-move" style="position:absolute; top:9; left:-15;"></span>
+##                    </div>
+##                    % endfor
+##                    <input type="text" id="${key}" style="display: none;" value="${value}" class="dataList">
+##                    <div class="placeholder" style="position: relative;"><li class="placeholder list-group-item form-control" id="${key}placeholder" onclick="$(this).text('');" onkeydown="addListItem($(this).text(), this)" contenteditable>add new...</li>
+##                    <a class="badge glyphicon glyphicon-plus" style="position:absolute; top:9; right:9;" onclick="addListItem($(this.parentNode).text(), this);"> </a>
+##                    </div>
+##                </ul>
+##                    </div>
+##            %endif
+##        % elif key=='_backrefs':
+##            <h4 style="margin-left: 5px;">references</h4>
+##            % for refs, vals in value.iteritems():
+##                % for schema, schema_attr in vals.iteritems():
+##                    % for parent_field_name, parent_keys in schema_attr.iteritems():
+##                        <div class="row" style="margin-left: 25px;">
+##                        <ul class="list-group col-lg-4">
+##                        <h5>${refs}</h5>
+##                        % for parent_key in parent_keys:
+##                            <div style="position: relative;">
+##                                <li class="list-group-item form-control">${parent_key}</li>
+##                                <a href="/${schema}/${parent_key}/edit" style="position:absolute; top:9; right:9;" class="badge" data-toggle="popover" id="${parent_key}" object-vals='${parent_key}'>
+##                                <span class="glyphicon glyphicon-search"></span></a>
+##                            </div>
+####                                <a class="badge glyphicon glyhref="/${schema}/${parent_key}/edit">${parent_key}</a>
+##                        % endfor
+##                        </ul>
+##                        </div>
+##                    % endfor
+##                % endfor
+##            % endfor
+####                <textarea class="data col-lg-4" value="${value}">${value}</textarea></div>
+##        % elif key=='body' or type(value) is dict:
+##                <textarea class="data col-lg-4" value="${value}">${value}</textarea></div>
+##        % else:
+##                <ul class="list-group col-lg-4" id="${key}">
+##                    <li class="list-group-item form-control data" id="${key}" item="item" contenteditable>${value}</li>
+##                </ul></div>
+##        % endif
+##    % endfor
+##    <button type="submit"> submit me </button><P>${message}</P>
+##    <input type="text" id="submitter" style="display: none;" name="json_data">
+##</form>
+##<br>
 <a href="/${schema_name}"><-${schema_name}</a>
 
 <script>
@@ -100,7 +141,7 @@
         });
         $('form').submit(function(){
 
-            var search = $('.ListField');
+            var search = $('#ListField');
             for(var i=0; i<search.length; i++){
                 var hasher = "#" + $(search[i]).attr('keyName');
                 var newList = $(search[i])
@@ -112,7 +153,7 @@
                 $(hasher).attr('value', newList);
             }
 
-            var search = $('.ForeignListField');
+            var search = $('#ForeignListField');
             for(var i=0; i<search.length; i++){
                 var hasher = "#" + $(search[i]).attr('keyName');
                 var newList = $(search[i])

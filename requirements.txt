@@ -1,0 +1,11 @@
+Flask==0.10.1
+Jinja2==2.7.1
+Mako==0.9.0
+MarkupSafe==0.18
+Werkzeug==0.9.4
+itsdangerous==0.23
+-e git://github.com/CenterForOpenScience/modular-odm.git@733e11d61311039d90d2c7569cdc16eb2bcaf5b1#egg=modular_odm-origin/develop
+pymongo==2.6
+python-dateutil==2.1
+six==1.3.0
+wsgiref==0.1.2

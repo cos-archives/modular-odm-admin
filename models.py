@@ -5,17 +5,10 @@
 
 import pprint
 
-from modularodm import StoredObject
-from modularodm.fields.StringField import StringField
-from modularodm.fields.IntegerField import IntegerField
-from modularodm.fields.FloatField import FloatField
-from modularodm.fields.BooleanField import BooleanField
-from modularodm.fields.DateTimeField import DateTimeField
-from modularodm.fields.ForeignField import ForeignField
-from modularodm.storage.PickleStorage import PickleStorage
-from modularodm.storage.MongoStorage import MongoStorage
 from modularodm.validators import *
 from modularodm.query.querydialect import DefaultQueryDialect as Q
+
+from modularodm import StoredObject, fields, storage
 
 pp = pprint.PrettyPrinter(indent=4)
 
@@ -34,26 +27,26 @@ if debug:
     except:pass
 
 class Team(StoredObject):
-    name = StringField(primary=True)
-    owner = ForeignField('Manager', backref='owned')
-    wins = IntegerField(list=True)
-    playoffs = BooleanField(default=None, list=True)
-    schedule = StringField(list=True)
-    players = ForeignField('Player', list=True, backref='plays_for')
+    name = fields.StringField(primary=True)
+    owner = fields.ForeignField('Manager', backref='owned')
+    wins = fields.IntegerField(list=True)
+    playoffs = fields.BooleanField(default=None, list=True)
+    schedule = fields.StringField(list=True)
+    players = fields.ForeignField('Player', list=True, backref='plays_for')
 
 class Manager(StoredObject):
-    name = StringField(primary=True)
-    players_managed = ForeignField('Player', list=True, backref='managed_by')
+    name = fields.StringField(primary=True)
+    players_managed = fields.ForeignField('Player', list=True, backref='managed_by')
 
 class Player(StoredObject):
-    name = StringField(primary=True)
-    number = IntegerField()
-    rating = FloatField(default=0.0)
-    injured = BooleanField(default=False)
+    name = fields.StringField(primary=True)
+    number = fields.IntegerField()
+    rating = fields.FloatField(default=0.0)
+    injured = fields.BooleanField(default=False)
 
-Team.set_storage(PickleStorage('team'))
-Manager.set_storage(PickleStorage('manager'))
-Player.set_storage(PickleStorage('player'))
+Team.set_storage(storage.PickleStorage('team'))
+Manager.set_storage(storage.PickleStorage('manager'))
+Player.set_storage(storage.PickleStorage('player'))
 
 if debug:
     d = Player(name="Griffin", number=10, rating=85.0, injured=True)
