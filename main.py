@@ -6,6 +6,7 @@ from modularodm.fields import Field
 from collections import OrderedDict
 import json
 
+
 app = Flask(__name__)
 
 from mako.lookup import TemplateLookup
@@ -15,6 +16,11 @@ makolookup = TemplateLookup(directories=['templates'])
 def render(filename, **kwargs):
     t = makolookup.get_template(filename).render(**kwargs)
     return t
+
+def value_or_pk(record):
+    if isinstance(record, models.StoredObject):
+        return record._primary_key
+    return record
 
 def get_schema_keys(schema_name):
     schema = models.StoredObject._collections[schema_name]
@@ -33,7 +39,7 @@ def schema_display(schema_name):
     schema_obj = models.StoredObject._collections[schema_name]
     primary_name = schema_obj._primary_name
     schema_info = json.dumps(get_schema_keys(schema_name))
-    schema_entries = schema_obj.find_all()
+    schema_entries = schema_obj.find()
     entry_data = []
     for i in list(schema_entries):
         storage = i.to_storage()
@@ -67,8 +73,8 @@ def edit(schema_name, sid):
 
     if request.method == 'POST':
         for key in data_dict.keys():
-            if key in json.loads(request.form['json_data']) and key is not "_backrefs":
-                incoming_data = json.loads(request.form['json_data'])
+            incoming_data = json.loads(request.form['json_data'])
+            if key in incoming_data and key is not "_backrefs":
                 field_type = type(schema_obj._fields[key]).__name__
                 if field_type is 'BooleanField':
                     new_value = incoming_data[key]
@@ -119,7 +125,6 @@ def edit(schema_name, sid):
 
                     if old_value != foreign_obj:
                         new_value = foreign_obj
-
                 setattr(schema_obj, key, new_value)
 
         schema_obj.save()
@@ -158,7 +163,7 @@ def edit(schema_name, sid):
     return render(
         filename="edit.mako",
         schema_name=schema_name,
-        schema_obj_data=data_dict,
+        schema_obj=schema_obj,
         json_data=json.dumps(data_dict),
         schema_primary_name=schema_class._primary_name,
         message=message
